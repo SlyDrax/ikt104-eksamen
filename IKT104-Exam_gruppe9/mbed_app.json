@@ -1,0 +1,19 @@
+{
+    "target_overrides": {
+        "*": {
+            "nsapi.default-wifi-security": "WPA_WPA2",
+            "nsapi.default-wifi-ssid": "\"Wi-fi 1\"",
+            "nsapi.default-wifi-password": "\"OeseBose\"",
+            "rtos.main-thread-stack-size": 8192,
+            "target.printf_lib": "minimal-printf",
+            "platform.minimal-printf-enable-floating-point": true,
+            "platform.minimal-printf-set-floating-point-max-decimals": 6,
+            "platform.minimal-printf-enable-64-bit": true
+        },
+        "DISCO_L475VG_IOT01A": {
+            "target.components_add": ["ism43362"],
+            "ism43362.provide-default": true,
+            "target.network-default-interface-type": "WIFI"
+        }
+    }
+}
