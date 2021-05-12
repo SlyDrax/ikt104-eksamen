@@ -122,13 +122,17 @@ int main()
 
     std::string tid;
     time_t unix_timer;
+    int timezone_offset;
+    int dst_savings;
     struct tm * timeinfo = {0};
     document["date_time_unix"].get_to(unix_timer);
+    document["timezone_offset"].get_to(timezone_offset);
+    document["dst_savings"].get_to(dst_savings);
 
     
-    timeinfo->tm_isdst = 1;
     timeinfo = localtime (&unix_timer);
-    
+    timeinfo->tm_hour += timezone_offset+dst_savings;
+    mktime(timeinfo);
 
     char buffer2[80];
     strftime (buffer2,80,"\nTimedate is: %c\n", timeinfo);
