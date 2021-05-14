@@ -3,7 +3,6 @@
 
 #include <iostream>
 
-
 #define JSON_NOEXCEPTION
 #include "json.hpp"
 #include <stdio.h>
@@ -25,16 +24,30 @@ InterruptIn b1(A1, PullUp);
 // doubles as -
 InterruptIn b3(A2, PullUp);
 
-int screen_toggle = 1;
-int mod_toggle = 0;
+PwmOut buzzer(D11);
+
+uint8_t screen_toggle = 1;
+uint8_t mod_toggle = 0;
 
 Timer t;
 int timer;
 
 int set_alarm[2] = {0};
 
+bool is_armed = 0;
+
 void forward_function() {
-    if(mod_toggle) {
+    if(mod_toggle == 1){
+        // Hours
+        set_alarm[0] += 1;
+        if(set_alarm[0] >= 24)
+            set_alarm[0] = 0;
+    }
+    else if(mod_toggle == 2) {
+        // Minutes
+        set_alarm[1] += 1;
+        if(set_alarm[1] >= 60)
+            set_alarm[1] = 0;            
     }
     else {
         if(screen_toggle >= 4)
@@ -44,12 +57,25 @@ void forward_function() {
 }
 
 void mod_function(){
-    mod_toggle += 1;
+    if(screen_toggle == 2)
+        mod_toggle += 1;
 }
 
 void back_function() {
-    if(mod_toggle) {
-        
+    if(mod_toggle == 1){
+        // Hours
+        set_alarm[0] -= 1;
+        if(set_alarm[0] < 0)
+            set_alarm[0] = 23;
+    }
+    else if(mod_toggle == 2) {
+        // Minutes
+        set_alarm[1] -= 1;
+        if(set_alarm[1] < 0)
+            set_alarm[1] = 59; 
+    }
+    else if(screen_toggle == 5){
+        set_alarm[1] += 5;
     }
     else {
         if(screen_toggle <= 1)
@@ -63,50 +89,81 @@ void trigger_forward() {forward_function();}
 void trigger_back() {back_function();}
 
 
+void time_update(tm* timeinfo) {
+    char buffer[16];
+    
+    strftime (buffer,16,"%a %B %d %G", timeinfo);
 
-void time_update() {
-    char buffer2[80];
-    char buffer3[16];
-    time_t seconds = time(NULL);
-    strftime (buffer2,80,"%T", localtime(&seconds));
-    strftime (buffer3,16,"%a %B %d %G", localtime(&seconds));
-    printf("%s\n",buffer2);
+    int hr = timeinfo->tm_hour;
+    int min = timeinfo->tm_min;
+    int sec = timeinfo->tm_sec;
+
+    printf("%02i:%02i:%02i\n",hr, min, sec);
     lcd.clear();
-    lcd.printf("%s", buffer2);
+    lcd.printf("%02i:%02i:%02i", hr, min, sec);
     lcd.setCursor(0,1);
-    lcd.printf("%s", buffer3);
+    lcd.printf("%s", buffer);
 }
 
-void alarm_view() {
-    int hr = 0;
-    int min = 0;
+void beep(){
+    printf("BEEP!\n");
+    buzzer.period((float)1/4000);
+    buzzer.write(0.05f);
+    ThisThread::sleep_for(100ms);
+    buzzer.write(0.0);
+    ThisThread::sleep_for(100ms);
+}
 
+void alarm_check(tm* timeinfo){
+    if(!is_armed)
+        return;
+    if((set_alarm[0] == timeinfo->tm_hour) && (set_alarm[1] == timeinfo->tm_min)){
+        screen_toggle = 5;
+        while(is_armed)
+            lcd.clear();
+            lcd.printf("VÅKNE");
+            beep();
+            if(mod_toggle){
+                is_armed = 0;
+                mod_toggle = 0;
+                }
+    }
+}
+
+
+
+void alarm_view() {
+    
     lcd.clear();
     lcd.printf("Set alarm: %02i:%02i", set_alarm[0],set_alarm[1]);
 
     while(true){
-        lcd.clear();
-
+        
         if (mod_toggle == 1) {
             while(true){
-
-                lcd.printf("Set Hr:   :%02i", min);
+                int hr = set_alarm[0];
+                int min = set_alarm[1];
+                lcd.clear();
+                lcd.printf("Set alarm:   :%02i", min);
                 ThisThread::sleep_for(300ms);
                 lcd.clear();
-                lcd.printf("Set Hr: %02i:%02i", hr, min);
+                lcd.printf("Set alarm: %02i:%02i", hr, min);
                 ThisThread::sleep_for(300ms);
 
                 if (mod_toggle !=1)
                     break;
                 }
+            
         }
         else if (mod_toggle == 2) {
             while(true){
-
-                lcd.printf("Set Min: %02i:  ", hr);
+                int hr = set_alarm[0];
+                int min = set_alarm[1];
+                lcd.clear();
+                lcd.printf("Set alarm: %02i:  ", hr);
                 ThisThread::sleep_for(300ms);
                 lcd.clear();
-                lcd.printf("Set Min: %02i:%02i", hr, min);
+                lcd.printf("Set alarm: %02i:%02i", hr, min);
                 ThisThread::sleep_for(300ms);
 
                 if (mod_toggle !=2)
@@ -115,13 +172,12 @@ void alarm_view() {
             
         }
         else { 
+        is_armed = 1;
         mod_toggle = 0;
             break;}
     
     }
     
-    set_alarm[0] = hr;
-    set_alarm[1] = min;
 
 }
 
@@ -250,12 +306,15 @@ int main()
     b2.fall(&trigger_mod);
     b3.fall(&trigger_back);
 
+    
     while (true) {
-
+        time_t seconds = time(NULL);
+        struct tm* timeinfo = localtime(&seconds);
+        alarm_check(timeinfo);
         printf("%i\n", screen_toggle);
 
         if(screen_toggle == 1)
-            time_update();
+            time_update(timeinfo);
         else if(screen_toggle == 2)
             alarm_view();
 
