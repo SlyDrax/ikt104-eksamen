@@ -9,7 +9,7 @@
 #include <time.h>
 #include "wifi.h"
 #include "cert.h"
-
+#include "HTS221Sensor.h"
 
 #include "DFRobot_RGBLCD.h"
 
@@ -17,6 +17,10 @@
 using json = nlohmann::json;
 
 DFRobot_RGBLCD lcd(16,2,D14,D15); 
+
+int colorR = 255;
+int colorG = 255;
+int colorB = 255;
 
 // doubles as +
 InterruptIn b2(A0, PullUp);
@@ -26,8 +30,8 @@ InterruptIn b3(A2, PullUp);
 
 PwmOut buzzer(D11);
 
-uint8_t screen_toggle = 1;
-uint8_t mod_toggle = 0;
+int screen_toggle = 1;
+int mod_toggle = 0;
 
 Timer t;
 int timer;
@@ -59,6 +63,11 @@ void forward_function() {
 void mod_function(){
     if(screen_toggle == 2)
         mod_toggle += 1;
+    else if(screen_toggle == 5){
+        mod_toggle += 1;
+        screen_toggle = 1;
+        is_armed = 0;
+        }
 }
 
 void back_function() {
@@ -75,7 +84,17 @@ void back_function() {
             set_alarm[1] = 59; 
     }
     else if(screen_toggle == 5){
+        // snooze
         set_alarm[1] += 5;
+        mod_toggle = 1;
+        is_armed = 1;
+        if(set_alarm[1] >= 60){
+            set_alarm[1] -= 60;
+            set_alarm[0] += 1;
+            if(set_alarm[0] >= 24){
+                set_alarm[0] = 0;
+            }
+        }
     }
     else {
         if(screen_toggle <= 1)
@@ -106,43 +125,68 @@ void time_update(tm* timeinfo) {
 }
 
 float rand_float(){
-    return (float)rand()/(float)(RAND_MAX);
+    return (float)rand()/(float)(RAND_MAX/2)+0.1;
 }
 
 void beep(){
     printf("BEEP!\n");
-    buzzer.period((float)1/4000);
-    buzzer.write(rand_float());
-    ThisThread::sleep_for(80ms);
-    buzzer.write(rand_float());
-    ThisThread::sleep_for(100ms);
-    buzzer.write(rand_float());
-    ThisThread::sleep_for(60ms);
-    buzzer.write(rand_float());
-    ThisThread::sleep_for(20ms);
-    buzzer.write(rand_float());
-    ThisThread::sleep_for(40ms);
+    buzzer.period((float)1/3500);
+    buzzer.write(0.05f);
+    lcd.setRGB(255, 0, 0);
+    ThisThread::sleep_for(50ms);
     buzzer.write(0.0);
-    ThisThread::sleep_for(100ms);
+    ThisThread::sleep_for(50ms);
+    buzzer.write(0.05f);
+    lcd.setRGB(0, 255, 0);
+    ThisThread::sleep_for(50ms);
+    buzzer.write(0.0);
+    ThisThread::sleep_for(50ms);
+    buzzer.write(0.05f);
+    lcd.setRGB(0, 0, 255);
+    ThisThread::sleep_for(50ms);
+    buzzer.write(0.0);
+    ThisThread::sleep_for(50ms);
+    buzzer.write(0.05f);
+    lcd.setRGB(255, 0, 0);
+    ThisThread::sleep_for(50ms);
+    buzzer.write(0.0);
+    ThisThread::sleep_for(50ms);
+    buzzer.write(0.05f);
+    lcd.setRGB(0, 255, 0);
+    ThisThread::sleep_for(200ms);
+    lcd.setRGB(0, 0, 255);
+    buzzer.write(0.0);
+    printf("%.06f\n", rand_float());
 }
 
 void alarm_check(tm* timeinfo){
     if(!is_armed)
         return;
     if((set_alarm[0] == timeinfo->tm_hour) && (set_alarm[1] == timeinfo->tm_min)){
+        printf("toggeling screen 5...");
         screen_toggle = 5;
-        while(is_armed)
+        printf("Setalarm == time");
+        while(is_armed){
+            time_t local_seconds = time(NULL);
+            struct tm* local_timeinfo = localtime(&local_seconds);
             lcd.clear();
-            lcd.printf("VÅKNE");
+            lcd.printf("      ALARM     ");
+            lcd.setCursor(0,1);
+            lcd.printf("      %02i:%02i      ", local_timeinfo->tm_hour, local_timeinfo->tm_min);
+
             beep();
             if(mod_toggle){
-                is_armed = 0;
-                mod_toggle = 0;
-                }
+                mod_toggle += 1;
+                screen_toggle = 1;
+                break;
+            }
+        }
     }
 }
 
-
+void bebug(){
+    printf("screen toggle %i, mod: %i, is_armed: %i\n", screen_toggle, mod_toggle, is_armed);
+}
 
 void alarm_view() {
     
@@ -179,13 +223,17 @@ void alarm_view() {
                 ThisThread::sleep_for(300ms);
 
                 if (mod_toggle !=2)
+                    is_armed = 1;
                     break;
                 }
             
         }
         else { 
-        is_armed = 1;
+        
+        printf("resetting mod_toggle, old value: %i\n", mod_toggle);
         mod_toggle = 0;
+
+        
             break;}
     
     }
@@ -308,12 +356,40 @@ unsigned long int setup() {
     return unix_timer+timezone_offset*3600+dst_savings*3600;
 }
 
+void print_temp(float var) {
+    printf("Temperature: %.2f\n", var);
+    lcd.printf("Temperature: %.2f\n", var);
+}
+
+void print_hum(float var) {
+    printf("Humidity: %.2f\n", var);
+    lcd.setCursor(0,1);
+    lcd.printf("Humidity: %.2f\n", var);
+}
+
+void hum_temp(){
+    DevI2C i2c(PB_11, PB_10);
+    HTS221Sensor sensor(&i2c);
+    sensor.init(nullptr);
+    sensor.enable();
+    float temperature;
+    float humidity;
+    lcd.clear();
+    if (sensor.get_temperature(&temperature) != 0)
+        printf("An error occured reading temperature\n");
+    else print_temp(temperature);
+
+    if (sensor.get_humidity(&humidity) != 0)
+        printf("An error occured reading humidity\n");
+    else print_temp(humidity);
+}
+
 int main()
 {
     set_time(setup());
 
     lcd.init();
-    
+    lcd.setRGB(colorR, colorG, colorB);
     b1.fall(&trigger_forward);
     b2.fall(&trigger_mod);
     b3.fall(&trigger_back);
@@ -322,14 +398,18 @@ int main()
     while (true) {
         time_t seconds = time(NULL);
         struct tm* timeinfo = localtime(&seconds);
-        alarm_check(timeinfo);
-        printf("%i\n", screen_toggle);
 
+        alarm_check(timeinfo);
+        bebug();
+        
         if(screen_toggle == 1)
             time_update(timeinfo);
         else if(screen_toggle == 2)
             alarm_view();
-
+        else if(screen_toggle == 3)
+            hum_temp();
+        mod_toggle = 0;
         ThisThread::sleep_for(1s);
+        lcd.setRGB(255, 255, 255);
     }
 }

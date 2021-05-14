@@ -22,6 +22,28 @@
         }
     },
     {
+        "module": "HTS221Sensor.o",
+        "size": {
+            ".text": 1121,
+            ".data": 0,
+            ".bss": 0,
+            ".text-delta": 1121,
+            ".data-delta": 0,
+            ".bss-delta": 0
+        }
+    },
+    {
+        "module": "HTS221_driver.o",
+        "size": {
+            ".text": 924,
+            ".data": 0,
+            ".bss": 0,
+            ".text-delta": 924,
+            ".data-delta": 0,
+            ".bss-delta": 0
+        }
+    },
+    {
         "module": "Source\\DFRobot_RGBLCD.o",
         "size": {
             ".text": 666,
@@ -35,10 +57,10 @@
     {
         "module": "Source\\main.o",
         "size": {
-            ".text": 37091,
-            ".data": 1,
-            ".bss": 4639,
-            ".text-delta": 88,
+            ".text": 38376,
+            ".data": 16,
+            ".bss": 4642,
+            ".text-delta": 377,
             ".data-delta": 0,
             ".bss-delta": 0
         }
@@ -134,10 +156,10 @@
     {
         "module": "mbed-os\\connectivity",
         "size": {
-            ".text": 179628,
+            ".text": 179578,
             ".data": 150,
             ".bss": 310,
-            ".text-delta": 0,
+            ".text-delta": -50,
             ".data-delta": 0,
             ".bss-delta": 0
         }
@@ -145,10 +167,10 @@
     {
         "module": "mbed-os\\drivers",
         "size": {
-            ".text": 3638,
+            ".text": 3712,
             ".data": 0,
             ".bss": 972,
-            ".text-delta": 72,
+            ".text-delta": 74,
             ".data-delta": 0,
             ".bss-delta": 0
         }
@@ -222,20 +244,20 @@
     {
         "module": "mbed-os\\targets",
         "size": {
-            ".text": 31334,
+            ".text": 31536,
             ".data": 8,
             ".bss": 1682,
-            ".text-delta": 28,
+            ".text-delta": 202,
             ".data-delta": 0,
             ".bss-delta": 0
         }
     },
     {
         "summary": {
-            "static_ram": 28998,
+            "static_ram": 29016,
             "static_ram_delta": 0,
-            "total_flash": 391560,
-            "total_flash_delta": 188
+            "total_flash": 395131,
+            "total_flash_delta": 2648
         }
     }
 ]

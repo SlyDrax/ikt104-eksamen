@@ -309,4 +309,9 @@ BUILD\DISCO_L475VG_IOT01A\ARMC6\Source\main.o: Source\main.cpp \
   mbed-os\platform\include\platform\mbed_stats.h \
   mbed-os\platform\include\platform\Stream.h \
   mbed-os\platform\include\platform\FileLike.h include\json.hpp \
-  include\wifi.h include\cert.h Source\DFRobot_RGBLCD.h
+  include\wifi.h include\cert.h HTS221Sensor.h \
+  X_NUCLEO_COMMON\DevI2C\DevI2C.h mbed-os\hal\include\hal\pinmap.h \
+  mbed-os\drivers\include\drivers\SPI.h HTS221_driver.h \
+  ST_INTERFACES\Sensors\HumiditySensor.h \
+  ST_INTERFACES\Common\Component.h ST_INTERFACES\Sensors\TempSensor.h \
+  Source\DFRobot_RGBLCD.h
