@@ -20,18 +20,20 @@ using json = nlohmann::json;
 DFRobot_RGBLCD lcd(16,2,D14,D15); 
 
 // doubles as +
-InterruptIn b1(A0, PullUp);
-InterruptIn b2(A1, PullUp);
+InterruptIn b2(A0, PullUp);
+InterruptIn b1(A1, PullUp);
 // doubles as -
 InterruptIn b3(A2, PullUp);
 
 int screen_toggle = 1;
-bool mod_toggle = 0;
+int mod_toggle = 0;
 
 Timer t;
 int timer;
 
-void trigger_forward() {
+int set_alarm[2] = {0};
+
+void forward_function() {
     if(mod_toggle) {
     }
     else {
@@ -40,9 +42,12 @@ void trigger_forward() {
         else  screen_toggle += 1;
     }
 }
-void trigger_mod();
 
-void trigger_back() {
+void mod_function(){
+    mod_toggle += 1;
+}
+
+void back_function() {
     if(mod_toggle) {
         
     }
@@ -52,6 +57,12 @@ void trigger_back() {
         else  screen_toggle -= 1;
     }
 }
+
+void trigger_mod() {mod_function();}
+void trigger_forward() {forward_function();}
+void trigger_back() {back_function();}
+
+
 
 void time_update() {
     char buffer2[80];
@@ -67,7 +78,50 @@ void time_update() {
 }
 
 void alarm_view() {
+    int hr = 0;
+    int min = 0;
 
+    lcd.clear();
+    lcd.printf("Set alarm: %02i:%02i", set_alarm[0],set_alarm[1]);
+
+    while(true){
+        lcd.clear();
+
+        if (mod_toggle == 1) {
+            while(true){
+
+                lcd.printf("Set Hr:   :%02i", min);
+                ThisThread::sleep_for(300ms);
+                lcd.clear();
+                lcd.printf("Set Hr: %02i:%02i", hr, min);
+                ThisThread::sleep_for(300ms);
+
+                if (mod_toggle !=1)
+                    break;
+                }
+        }
+        else if (mod_toggle == 2) {
+            while(true){
+
+                lcd.printf("Set Min: %02i:  ", hr);
+                ThisThread::sleep_for(300ms);
+                lcd.clear();
+                lcd.printf("Set Min: %02i:%02i", hr, min);
+                ThisThread::sleep_for(300ms);
+
+                if (mod_toggle !=2)
+                    break;
+                }
+            
+        }
+        else { 
+        mod_toggle = 0;
+            break;}
+    
+    }
+    
+    set_alarm[0] = hr;
+    set_alarm[1] = min;
 
 }
 
@@ -191,9 +245,9 @@ int main()
     set_time(setup());
 
     lcd.init();
-
+    
     b1.fall(&trigger_forward);
-    // b2.fall(&trigger_mod);
+    b2.fall(&trigger_mod);
     b3.fall(&trigger_back);
 
     while (true) {
@@ -202,6 +256,8 @@ int main()
 
         if(screen_toggle == 1)
             time_update();
+        else if(screen_toggle == 2)
+            alarm_view();
 
         ThisThread::sleep_for(1s);
     }
