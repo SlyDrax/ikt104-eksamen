@@ -357,14 +357,14 @@ unsigned long int setup() {
 }
 
 void print_temp(float var) {
-    printf("Temperature: %.2f\n", var);
-    lcd.printf("Temperature: %.2f\n", var);
+    printf("Temp: %.2f ", var);
+    lcd.printf("Temp: %.1fC", var);
 }
 
 void print_hum(float var) {
-    printf("Humidity: %.2f\n", var);
+    printf("Hum: %.2f\n", var);
     lcd.setCursor(0,1);
-    lcd.printf("Humidity: %.2f\n", var);
+    lcd.printf("Hum:  %.1f", var);
 }
 
 void hum_temp(){
@@ -381,7 +381,7 @@ void hum_temp(){
 
     if (sensor.get_humidity(&humidity) != 0)
         printf("An error occured reading humidity\n");
-    else print_temp(humidity);
+    else print_hum(humidity);
 }
 
 int main()
