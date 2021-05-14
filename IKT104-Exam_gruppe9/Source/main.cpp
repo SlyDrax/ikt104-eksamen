@@ -1,4 +1,8 @@
 #include "mbed.h"
+#include <chrono>
+
+#include <iostream>
+
 
 #define JSON_NOEXCEPTION
 #include "json.hpp"
@@ -7,6 +11,7 @@
 #include "wifi.h"
 #include "cert.h"
 
+
 #include "DFRobot_RGBLCD.h"
 
 
@@ -14,13 +19,77 @@ using json = nlohmann::json;
 
 DFRobot_RGBLCD lcd(16,2,D14,D15); 
 
+// doubles as +
+InterruptIn b1(A0, PullUp);
+InterruptIn b2(A1, PullUp);
+// doubles as -
+InterruptIn b3(A2, PullUp);
+
+int screen_toggle = 1;
+bool mod_toggle = 0;
+
 Timer t;
 int timer;
 
-int main()
-{
-    lcd.init();
-    // Get pointer to default network interface
+void trigger_forward() {
+    if(mod_toggle) {
+    }
+    else {
+        if(screen_toggle >= 4)
+            screen_toggle = 1;
+        else  screen_toggle += 1;
+    }
+}
+void trigger_mod();
+
+void trigger_back() {
+    if(mod_toggle) {
+        
+    }
+    else {
+        if(screen_toggle <= 1)
+            screen_toggle = 4;
+        else  screen_toggle -= 1;
+    }
+}
+
+void time_update() {
+    char buffer2[80];
+    char buffer3[16];
+    time_t seconds = time(NULL);
+    strftime (buffer2,80,"%T", localtime(&seconds));
+    strftime (buffer3,16,"%a %B %d %G", localtime(&seconds));
+    printf("%s\n",buffer2);
+    lcd.clear();
+    lcd.printf("%s", buffer2);
+    lcd.setCursor(0,1);
+    lcd.printf("%s", buffer3);
+}
+
+void alarm_view() {
+
+
+}
+
+json json_reader(char buffer[]) {
+    char* json_begin = strchr(buffer, '{');
+    char* json_end = strrchr(buffer, '}');
+
+    if (json_begin == nullptr || json_end == nullptr) {
+        printf("Failed to find JSON in response\n");
+        while(1);
+    }
+
+    json_end[1] = 0;
+
+    printf("JSON response:\n");
+    printf("%s\n", json_begin);
+
+    return json::parse(json_begin);
+}
+
+unsigned long int setup() {
+        // Get pointer to default network interface
     NetworkInterface *network = NetworkInterface::get_default_instance();
 
     if (!network) {
@@ -77,7 +146,7 @@ int main()
     }
     printf("Connection to server successful!\n");
 
-// Create HTTP request
+    // Create HTTP request
     const char request[] = "GET /timezone?apiKey=29c4499bedc946199569f5541ec7d8a4&tz HTTP/1.1\r\n"
                            "Host: api.ipgeolocation.io\r\n"
                            "Connection: close\r\n"
@@ -104,44 +173,35 @@ int main()
 
     socket->close();
 
-    char* json_begin = strchr(buffer, '{');
-    char* json_end = strrchr(buffer, '}');
-
-    if (json_begin == nullptr || json_end == nullptr) {
-        printf("Failed to find JSON in response\n");
-        while(1);
-    }
-
-    json_end[1] = 0;
-
-    printf("JSON response:\n");
-    printf("%s\n", json_begin);
-
-    json document = json::parse(json_begin);
-
+    json document = json_reader(buffer);
 
     std::string tid;
     time_t unix_timer;
     int timezone_offset;
     int dst_savings;
-    struct tm * timeinfo = {0};
     document["date_time_unix"].get_to(unix_timer);
     document["timezone_offset"].get_to(timezone_offset);
     document["dst_savings"].get_to(dst_savings);
 
-    
-    timeinfo = localtime (&unix_timer);
-    timeinfo->tm_hour += timezone_offset+dst_savings;
-    mktime(timeinfo);
+    return unix_timer+timezone_offset*3600+dst_savings*3600;
+}
 
-    char buffer2[80];
-    strftime (buffer2,80,"\nTimedate is: %c\n", timeinfo);
-    puts (buffer2);
-    lcd.clear();
-    lcd.printf(buffer2);
-    
+int main()
+{
+    set_time(setup());
+
+    lcd.init();
+
+    b1.fall(&trigger_forward);
+    // b2.fall(&trigger_mod);
+    b3.fall(&trigger_back);
 
     while (true) {
+
+        printf("%i\n", screen_toggle);
+
+        if(screen_toggle == 1)
+            time_update();
 
         ThisThread::sleep_for(1s);
     }

@@ -24,7 +24,7 @@
     {
         "module": "Source\\DFRobot_RGBLCD.o",
         "size": {
-            ".text": 618,
+            ".text": 666,
             ".data": 0,
             ".bss": 50,
             ".text-delta": 0,
@@ -35,10 +35,10 @@
     {
         "module": "Source\\main.o",
         "size": {
-            ".text": 35897,
-            ".data": 0,
-            ".bss": 4353,
-            ".text-delta": 201,
+            ".text": 36360,
+            ".data": 4,
+            ".bss": 4594,
+            ".text-delta": 0,
             ".data-delta": 0,
             ".bss-delta": 0
         }
@@ -57,7 +57,7 @@
     {
         "module": "[lib]\\c_w.l",
         "size": {
-            ".text": 18954,
+            ".text": 18530,
             ".data": 20,
             ".bss": 676,
             ".text-delta": 0,
@@ -71,7 +71,7 @@
             ".text": 3110,
             ".data": 0,
             ".bss": 0,
-            ".text-delta": 94,
+            ".text-delta": 0,
             ".data-delta": 0,
             ".bss-delta": 0
         }
@@ -134,7 +134,7 @@
     {
         "module": "mbed-os\\connectivity",
         "size": {
-            ".text": 179740,
+            ".text": 179628,
             ".data": 150,
             ".bss": 310,
             ".text-delta": 0,
@@ -145,7 +145,7 @@
     {
         "module": "mbed-os\\drivers",
         "size": {
-            ".text": 3318,
+            ".text": 3472,
             ".data": 0,
             ".bss": 972,
             ".text-delta": 0,
@@ -232,10 +232,10 @@
     },
     {
         "summary": {
-            "static_ram": 28635,
+            "static_ram": 28880,
             "static_ram_delta": 0,
-            "total_flash": 386146,
-            "total_flash_delta": 295
+            "total_flash": 386279,
+            "total_flash_delta": 0
         }
     }
 ]
