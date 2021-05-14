@@ -105,11 +105,23 @@ void time_update(tm* timeinfo) {
     lcd.printf("%s", buffer);
 }
 
+float rand_float(){
+    return (float)rand()/(float)(RAND_MAX);
+}
+
 void beep(){
     printf("BEEP!\n");
     buzzer.period((float)1/4000);
-    buzzer.write(0.05f);
+    buzzer.write(rand_float());
+    ThisThread::sleep_for(80ms);
+    buzzer.write(rand_float());
     ThisThread::sleep_for(100ms);
+    buzzer.write(rand_float());
+    ThisThread::sleep_for(60ms);
+    buzzer.write(rand_float());
+    ThisThread::sleep_for(20ms);
+    buzzer.write(rand_float());
+    ThisThread::sleep_for(40ms);
     buzzer.write(0.0);
     ThisThread::sleep_for(100ms);
 }
